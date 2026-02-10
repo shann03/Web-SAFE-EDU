@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Copy of EduTrack Incident & Behavior Management",
+  "description": "A comprehensive student incident tracking and behavioral intervention system based on a detailed relational database schema. Features dashboard analytics, student profiling, and AI-driven behavioral analysis.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
