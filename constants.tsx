@@ -9,7 +9,7 @@ import {
   Monitor, 
   Settings,
 } from 'lucide-react';
-import { Student, Incident, IncidentType, User, UserRole, ParentGuardian, BehavioralIntervention, DeviceUsageRecord, GeneratedReport, Notification } from './types';
+import { Student, Incident, IncidentType, User, UserRole, ParentGuardian, BehavioralIntervention, DeviceUsageRecord, GeneratedReport, Notification, SystemLog } from './types';
 
 export interface NavItem {
   name: string;
@@ -113,6 +113,13 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
   { id: 'n1', title: 'New Incident Reported', message: 'Rafael Santos has been reported for Digital Misuse in the Canteen.', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), isRead: false, type: 'incident' },
   { id: 'n2', title: 'Report Ready', message: 'Monthly Behavioral Summary - Oct 2023 is now available for download.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), isRead: false, type: 'report' },
   { id: 'n3', title: 'System Maintenance', message: 'SAFE-EDU will undergo scheduled maintenance on Sunday at 2 AM.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), isRead: true, type: 'system' },
+];
+
+export const MOCK_SYSTEM_LOGS: SystemLog[] = [
+  { id: 'l1', timestamp: new Date().toISOString(), user_id: 'u_admin', user_name: 'Sarah Admin', action: 'Authorized System Login', category: 'Access', ip_address: '192.168.1.102' },
+  { id: 'l2', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), user_id: 'u_teacher', user_name: 'Jane Teacher', action: 'Reported Behavioral Incident #i102', category: 'Registry', ip_address: '192.168.1.144' },
+  { id: 'l3', timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), user_id: 'u_admin', user_name: 'Sarah Admin', action: 'Exported Compliance Report Q3', category: 'Audit', ip_address: '192.168.1.102' },
+  { id: 'l4', timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(), user_id: 'u_counselor', user_name: 'Mark Counselor', action: 'Initialized Welfare Roadmap for s1', category: 'Registry', ip_address: '192.168.1.201' },
 ];
 
 export const PREDEFINED_ACCOUNTS = [

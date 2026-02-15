@@ -93,3 +93,13 @@ export interface Notification {
   isRead: boolean;
   type: 'incident' | 'report' | 'system';
 }
+
+export interface SystemLog {
+  id: string;
+  timestamp: string;
+  user_id: string;
+  user_name: string;
+  action: string;
+  category: 'Security' | 'Access' | 'Registry' | 'Audit';
+  ip_address: string;
+}
