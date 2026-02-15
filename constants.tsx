@@ -38,11 +38,6 @@ export const MOCK_STUDENTS: Student[] = [
   { id: 's8', lrn: '101234567897', first_name: 'Isabella', last_name: 'Gomez', date_of_birth: '2007-06-18', gender: 'Female', grade_level: '11', section: 'Bonifacio', address: 'Bgy 22, Makati', contact_number: '0924-890-1234' },
   { id: 's9', lrn: '101234567898', first_name: 'Gabriel', last_name: 'Reyes', date_of_birth: '2010-01-01', gender: 'Male', grade_level: '8', section: 'Luna', address: 'Bgy 4, Pasig', contact_number: '0925-901-2345' },
   { id: 's10', lrn: '101234567899', first_name: 'Patricia', last_name: 'Lim', date_of_birth: '2011-09-09', gender: 'Female', grade_level: '7', section: 'Del Pilar', address: 'Bgy 9, Taguig', contact_number: '0926-012-3456' },
-  { id: 's11', lrn: '101234567900', first_name: 'David', last_name: 'Tan', date_of_birth: '2008-07-20', gender: 'Male', grade_level: '10', section: 'Jacinto', address: 'Bgy 10, Quezon City', contact_number: '0927-123-4567' },
-  { id: 's12', lrn: '101234567901', first_name: 'Angela', last_name: 'Garcia', date_of_birth: '2009-02-14', gender: 'Female', grade_level: '9', section: 'Aguinaldo', address: 'Bgy 6, Manila', contact_number: '0928-234-5678' },
-  { id: 's13', lrn: '101234567902', first_name: 'Jerome', last_name: 'Pineda', date_of_birth: '2007-11-30', gender: 'Male', grade_level: '11', section: 'Silang', address: 'Bgy 14, Makati', contact_number: '0929-345-6789' },
-  { id: 's14', lrn: '101234567903', first_name: 'Samantha', last_name: 'Wright', date_of_birth: '2010-05-05', gender: 'Female', grade_level: '8', section: 'Lopez Jaena', address: 'Bgy 5, Pasig', contact_number: '0930-456-7890' },
-  { id: 's15', lrn: '101234567904', first_name: 'Kevin', last_name: 'Chen', date_of_birth: '2011-12-25', gender: 'Male', grade_level: '7', section: 'Dagohoy', address: 'Bgy 11, Taguig', contact_number: '0931-567-8901' },
 ];
 
 export const MOCK_PARENTS: ParentGuardian[] = MOCK_STUDENTS.map(s => ({
@@ -66,71 +61,97 @@ export const MOCK_INCIDENT_TYPES: IncidentType[] = [
   { id: 'it7', name: 'Disrespectful Language', description: 'Inappropriate language directed at staff or peers.' }
 ];
 
-export const MOCK_INCIDENTS: Incident[] = Array.from({ length: 40 }).map((_, i) => ({
+export const MOCK_INCIDENTS: Incident[] = Array.from({ length: 45 }).map((_, i) => ({
   id: `i${i+1}`,
-  student_id: `s${(i % 15) + 1}`,
+  student_id: `s${(i % 10) + 1}`,
   reported_by_user_id: i % 3 === 0 ? 'u_teacher' : 'u_counselor',
   incident_type_id: `it${(i % 7) + 1}`,
-  date_reported: new Date(2023, 10, 1 + (i % 28)).toISOString(),
-  date_occurred: new Date(2023, 10, 1 + (i % 28), 9, 30).toISOString(),
-  location: i % 3 === 0 ? 'Computer Lab' : i % 3 === 1 ? 'Cafeteria' : 'Main Gate',
+  date_reported: new Date(2024, 2, 1 + (i % 28)).toISOString(),
+  date_occurred: new Date(2024, 2, 1 + (i % 28), 10, 15).toISOString(),
+  location: i % 4 === 0 ? 'Science Laboratory' : i % 4 === 1 ? 'Library' : i % 4 === 2 ? 'Playground' : 'Corridor',
   description: [
-    'Flagged for accessing unauthorized gaming sites during research hours.',
-    'Observed mocking a classmate regarding academic performance.',
-    'Accidentally shattered a window during a rough-housing incident.',
-    'Used inappropriate gestures during the flag ceremony.',
-    'Late for 3 consecutive days without a valid excuse.'
-  ][i % 5],
-  immediate_action: 'Counseling referral initiated and parent notified via SMS.',
-  status: i % 5 === 0 ? 'Resolved' : i % 5 === 1 ? 'Investigating' : 'Pending'
+    'Found using a smartphone to look up answers during a summative test.',
+    'Repeatedly interrupting class discussion with disrespectful remarks.',
+    'Accidentally broke a microscope during group activity.',
+    'Aggressive verbal exchange with a peer over a group project disagreement.',
+    'Accessing age-inappropriate websites during a free computer period.',
+    'Persistent bullying of younger students during dismissal.'
+  ][i % 6],
+  immediate_action: 'Verbal warning issued; formal referral to the Guidance Office submitted.',
+  status: i % 4 === 0 ? 'Resolved' : i % 4 === 1 ? 'Investigating' : i % 4 === 2 ? 'Pending' : 'Closed'
 }));
 
-export const MOCK_INTERVENTIONS: BehavioralIntervention[] = Array.from({ length: 15 }).map((_, i) => ({
+export const MOCK_INTERVENTIONS: BehavioralIntervention[] = Array.from({ length: 20 }).map((_, i) => ({
   id: `int${i+1}`,
-  student_id: `s${(i % 15) + 1}`,
+  student_id: `s${(i % 10) + 1}`,
   assigned_by_user_id: 'u_counselor',
-  intervention_type: i % 3 === 0 ? 'Counseling Session' : i % 3 === 1 ? 'Digital Wellness Plan' : 'Parent-Teacher Conference',
-  description: 'Bi-weekly monitoring of behavior and peer interactions.',
-  start_date: new Date(2023, 11, 1 + i).toISOString(),
-  status: i % 4 === 0 ? 'Completed' : 'Active'
+  intervention_type: i % 4 === 0 ? 'One-on-One Counseling' : i % 4 === 1 ? 'Behavioral Contract' : i % 4 === 2 ? 'Social Skills Workshop' : 'Parent Liaison Conference',
+  description: 'Developing self-regulation strategies and conflict resolution skills.',
+  start_date: new Date(2024, 1, 15 + i).toISOString(),
+  status: i % 5 === 0 ? 'Completed' : 'Active'
 }));
 
-export const MOCK_DEVICE_LOGS: DeviceUsageRecord[] = Array.from({ length: 25 }).map((_, i) => ({
+export const MOCK_DEVICE_LOGS: DeviceUsageRecord[] = Array.from({ length: 30 }).map((_, i) => ({
   id: `log${i+1}`,
-  student_id: `s${(i % 15) + 1}`,
-  device_id: `Tab-${100 + i}`,
-  usage_start: new Date(2023, 11, 15, 10, 0).toISOString(),
-  usage_end: new Date(2023, 11, 15, 11, 0).toISOString(),
-  activity_description: i % 6 === 0 ? 'Browsing non-educational social media.' : 'Accessing DepEd Commons modules.',
-  flagged: i % 6 === 0
+  student_id: `s${(i % 10) + 1}`,
+  device_id: `DEPED-TAB-${100 + i}`,
+  usage_start: new Date(2024, 2, 10, 8, 30).toISOString(),
+  usage_end: new Date(2024, 2, 10, 10, 0).toISOString(),
+  activity_description: i % 5 === 0 ? 'Flagged: Accessing restricted gaming URL.' : 'Accessing LRMDS portal for science modules.',
+  flagged: i % 5 === 0
 }));
 
 export const MOCK_REPORTS: GeneratedReport[] = [
-  { id: 'rep1', title: 'Q3 Behavioral Compliance Audit', type: 'Digital Safety Audit', generated_by: 'Sarah Admin', date_generated: '2023-11-20T10:00:00Z', status: 'Ready', file_size: '2.4 MB' },
-  { id: 'rep2', title: 'Monthly Incident Summary - Nov 2023', type: 'Incident Summary', generated_by: 'Sarah Admin', date_generated: '2023-11-30T16:00:00Z', status: 'Ready', file_size: '1.1 MB' },
-  { id: 'rep3', title: 'Student Welfare Progress Report', type: 'Welfare Progress', generated_by: 'Mark Counselor', date_generated: '2023-12-01T09:00:00Z', status: 'Ready', file_size: '0.8 MB' },
+  { id: 'rep1', title: 'Monthly Safety Audit - March 2024', type: 'Digital Safety Audit', generated_by: 'Sarah Admin', date_generated: '2024-03-01T08:00:00Z', status: 'Ready', file_size: '3.1 MB' },
+  { id: 'rep2', title: 'Q1 Behavioral Pattern Analysis', type: 'Welfare Progress', generated_by: 'Mark Counselor', date_generated: '2024-03-05T14:20:00Z', status: 'Ready', file_size: '1.8 MB' },
+  { id: 'rep3', title: 'Incident Prevalence Report', type: 'Incident Summary', generated_by: 'Sarah Admin', date_generated: '2024-03-10T10:00:00Z', status: 'Ready', file_size: '4.5 MB' },
+  { id: 'rep4', title: 'System Access & Security Audit', type: 'Annual Review', generated_by: 'Sarah Admin', date_generated: '2024-03-12T09:15:00Z', status: 'Ready', file_size: '2.2 MB' },
 ];
 
-export const MOCK_NOTIFICATIONS: Notification[] = [
-  { id: 'n1', title: 'Security Alert', message: 'Unauthorized device access attempt flagged in Computer Lab 2.', timestamp: new Date(Date.now() - 1000 * 60 * 10).toISOString(), isRead: false, type: 'system' },
-  { id: 'n2', title: 'New Intervention Assigned', message: 'You have been assigned to Maria Clara Dela Cruz for a Growth Plan.', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), isRead: false, type: 'incident' },
-];
-
-export const MOCK_SYSTEM_LOGS: SystemLog[] = Array.from({ length: 30 }).map((_, i) => ({
-  id: `l${i+1}`,
-  timestamp: new Date(Date.now() - (i * 1000 * 60 * 30)).toISOString(),
-  user_id: i % 2 === 0 ? 'u_admin' : 'u_teacher',
-  user_name: i % 2 === 0 ? 'Sarah Admin' : 'Jane Teacher',
+export const MOCK_SYSTEM_LOGS: SystemLog[] = Array.from({ length: 50 }).map((_, i) => ({
+  id: `sl${i+1}`,
+  timestamp: new Date(Date.now() - (i * 1000 * 60 * 45)).toISOString(),
+  user_id: i % 3 === 0 ? 'u_admin' : i % 3 === 1 ? 'u_teacher' : 'u_counselor',
+  user_name: i % 3 === 0 ? 'Sarah Admin' : i % 3 === 1 ? 'Jane Teacher' : 'Mark Counselor',
   action: [
-    'Updated Authority Registry Credentials',
-    'Reported Behavioral Incident',
-    'Accessed Student PII Records',
-    'Generated Compliance Audit',
-    'Flagged Device Policy Violation'
-  ][i % 5],
-  category: i % 5 === 0 ? 'Security' : i % 5 === 1 ? 'Registry' : 'Audit',
-  ip_address: `192.168.1.${100 + i}`
+    'Modified Authority Access Clearance',
+    'Reported New Behavioral Incident',
+    'Updated Student PII Data',
+    'Generated Annual Compliance Audit',
+    'Verified Biometric Identity',
+    'Initialized Crisis Intervention Plan'
+  ][i % 6],
+  category: i % 4 === 0 ? 'Security' : i % 4 === 1 ? 'Registry' : i % 4 === 2 ? 'Audit' : 'Access',
+  ip_address: `192.168.10.${100 + i}`
 }));
+
+// Added missing MOCK_NOTIFICATIONS to fix the error in App.tsx
+export const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: 'n1',
+    title: 'New Incident Reported',
+    message: 'Bullying report for Rafael Santos is awaiting review.',
+    timestamp: new Date().toISOString(),
+    isRead: false,
+    type: 'incident'
+  },
+  {
+    id: 'n2',
+    title: 'System Audit Ready',
+    message: 'The Q1 Safety Audit has been generated successfully.',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    isRead: true,
+    type: 'report'
+  },
+  {
+    id: 'n3',
+    title: 'Security Alert',
+    message: 'Multiple failed login attempts detected from unauthorized IP.',
+    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    isRead: false,
+    type: 'system'
+  }
+];
 
 export const PREDEFINED_ACCOUNTS = [
   {
