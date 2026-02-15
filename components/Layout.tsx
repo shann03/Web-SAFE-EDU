@@ -64,15 +64,17 @@ const Layout: React.FC<LayoutProps> = ({
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
-      {/* Sidebar - Deep Navy */}
       <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl z-20">
         <div className="p-6">
-          <div className="flex items-center gap-3 mb-10">
+          <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 bg-teal-600 rounded flex items-center justify-center text-white">
               <ShieldCheck size={18} />
             </div>
             <h1 className="text-xl font-bold text-white tracking-wider">SAFE-EDU</h1>
           </div>
+          <p className="text-[8px] font-black text-teal-500/60 uppercase tracking-[0.2em] mb-10 leading-relaxed px-1">
+            Student Assistance & Fostering Excellence in EDUcation
+          </p>
           
           <nav className="space-y-1">
             {filteredNavItems.map((item) => (
@@ -98,7 +100,7 @@ const Layout: React.FC<LayoutProps> = ({
               {user.full_name.split(' ').map(n => n[0]).join('')}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white truncate uppercase tracking-tighter" title={user.full_name}>{user.full_name}</p>
+              <p className="text-xs font-bold text-white truncate uppercase tracking-tighter">{user.full_name}</p>
               <p className="text-[10px] text-teal-600 font-bold uppercase tracking-widest">{user.role}</p>
             </div>
           </div>
@@ -112,7 +114,6 @@ const Layout: React.FC<LayoutProps> = ({
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm relative z-30">
           <div className="relative w-96 group">
@@ -128,10 +129,9 @@ const Layout: React.FC<LayoutProps> = ({
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-teal-50 rounded-full border border-teal-100">
               <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></div>
-              <span className="text-[10px] font-black text-teal-700 uppercase tracking-widest">System Secured</span>
+              <span className="text-[10px] font-black text-teal-700 uppercase tracking-widest">Protocol Active</span>
             </div>
             
-            {/* Notifications Toggle */}
             <div className="relative" ref={notifRef}>
               <button 
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
@@ -143,7 +143,6 @@ const Layout: React.FC<LayoutProps> = ({
                 )}
               </button>
 
-              {/* Notifications Dropdown */}
               {isNotifOpen && (
                 <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -181,11 +180,6 @@ const Layout: React.FC<LayoutProps> = ({
                       </div>
                     )}
                   </div>
-                  {notifications.length > 0 && (
-                    <div className="p-3 bg-slate-50 border-t border-slate-100 text-center">
-                      <button className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 transition-colors">View All Activity</button>
-                    </div>
-                  )}
                 </div>
               )}
             </div>

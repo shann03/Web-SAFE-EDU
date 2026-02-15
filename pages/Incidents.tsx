@@ -17,19 +17,25 @@ interface IncidentsProps {
 const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students, incidentTypes, onAddIncident, onUpdateStatus, searchQuery }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDictating, setIsDictating] = useState(false);
-  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+  const [isProcessingAI, setIsProcessingAI] = useState(false);
   const [newIncident, setNewIncident] = useState({ student_id: '', incident_type_id: '', location: '', description: '', immediate_action: '' });
   
   const recognitionRef = useRef<any>(null);
 
   const visibleIncidents = useMemo(() => {
-    let filtered = incidents;
-    if (currentUser.role === 'Teacher') filtered = filtered.filter(inc => inc.reported_by_user_id === currentUser.id);
+    let filtered = [...incidents];
+    if (currentUser.role === 'Teacher') {
+      filtered = filtered.filter(inc => inc.reported_by_user_id === currentUser.id);
+    }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(inc => {
         const s = students.find(st => st.id === inc.student_id);
-        return s?.first_name.toLowerCase().includes(q) || s?.last_name.toLowerCase().includes(q) || inc.description.toLowerCase().includes(q);
+        return (
+          s?.first_name.toLowerCase().includes(q) || 
+          s?.last_name.toLowerCase().includes(q) || 
+          inc.description.toLowerCase().includes(q)
+        );
       });
     }
     return filtered;
@@ -42,7 +48,7 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
     } else {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert("Voice registry not supported in this environment.");
+        alert("Voice registry is not supported in this browser.");
         return;
       }
       recognitionRef.current = new SpeechRecognition();
@@ -58,24 +64,27 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
 
   const handleAiRefinement = async () => {
     if (!newIncident.description) return;
-    setIsProcessingVoice(true);
+    setIsProcessingAI(true);
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Clean up this messy incident narration into a professional behavioral report: "${newIncident.description}"`
+        contents: `Rewrite this behavioral observation into a professional, objective, and clear incident report: "${newIncident.description}"`
       });
-      setNewIncident(prev => ({ ...prev, description: response.text || prev.description }));
+      if (response.text) {
+        setNewIncident(prev => ({ ...prev, description: response.text }));
+      }
     } catch (e) {
-      console.error("AI refinement failed");
+      console.error("AI refinement failed:", e);
+      alert("AI Service currently unavailable. Manual editing required.");
     } finally {
-      setIsProcessingVoice(false);
+      setIsProcessingAI(false);
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onAddIncident(newIncident as any);
+    onAddIncident(newIncident);
     setIsModalOpen(false);
     setNewIncident({ student_id: '', incident_type_id: '', location: '', description: '', immediate_action: '' });
   };
@@ -85,18 +94,16 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
       <div className="flex flex-col md:flex-row justify-between md:items-end gap-6 border-b border-slate-200 pb-8">
         <div>
           <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Assistance Records</h2>
-          <p className="text-slate-500 font-medium">{currentUser.role === 'Teacher' ? 'Personal registry of submitted behavioral reports.' : 'Central management for all reported student safety events.'}</p>
+          <p className="text-slate-500 font-medium">Official registry for behavioral monitoring and event tracking.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
-            <Plus size={16} /> Report New Event
-          </button>
-        </div>
+        <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-lg font-bold text-xs uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95">
+          <Plus size={16} /> Report New Event
+        </button>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto scrollbar-hide">
+          <table className="w-full text-left min-w-[800px]">
             <thead className="bg-slate-50/50">
               <tr>
                 <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Nature of Event</th>
@@ -107,19 +114,26 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {visibleIncidents.length > 0 ? visibleIncidents.map((inc) => {
+              {visibleIncidents.map((inc) => {
                 const student = students.find(s => s.id === inc.student_id);
                 const type = incidentTypes.find(t => t.id === inc.incident_type_id);
                 return (
                   <tr key={inc.id} className="hover:bg-slate-50/50 transition-all group">
                     <td className="px-8 py-5">
-                      <p className="text-sm font-bold text-slate-900 tracking-tight">{type?.name || 'Behavioral Report'}</p>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter truncate max-w-xs">{inc.description}</p>
+                      <p className="text-sm font-bold text-slate-900">{type?.name || 'Behavioral Report'}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter truncate max-w-[200px] md:max-w-xs">{inc.description}</p>
                     </td>
-                    <td className="px-8 py-5 text-sm font-bold text-slate-800">{student ? `${student.first_name} ${student.last_name}` : 'Unknown'}</td>
-                    <td className="px-8 py-5 text-xs font-bold text-slate-500">{new Date(inc.date_reported).toLocaleDateString()}</td>
+                    <td className="px-8 py-5 text-sm font-bold text-slate-800 whitespace-nowrap">{student ? `${student.first_name} ${student.last_name}` : 'N/A'}</td>
+                    <td className="px-8 py-5 text-xs font-bold text-slate-500 whitespace-nowrap">{new Date(inc.date_reported).toLocaleDateString()}</td>
                     <td className="px-8 py-5">
-                      <select disabled={currentUser.role === 'Teacher'} value={inc.status} onChange={(e) => onUpdateStatus(inc.id, e.target.value as any)} className={`px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-widest border transition-colors ${inc.status === 'Resolved' ? 'bg-teal-50 text-teal-700' : 'bg-amber-50 text-amber-700'}`}>
+                      <select 
+                        disabled={currentUser.role === 'Teacher'} 
+                        value={inc.status} 
+                        onChange={(e) => onUpdateStatus(inc.id, e.target.value as any)} 
+                        className={`px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-widest border transition-colors outline-none cursor-pointer ${
+                          inc.status === 'Resolved' ? 'bg-teal-50 text-teal-700 border-teal-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                        }`}
+                      >
                         <option value="Pending">Pending</option>
                         <option value="Investigating">Investigating</option>
                         <option value="Resolved">Resolved</option>
@@ -129,8 +143,11 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
                     <td className="px-8 py-5 text-right"><Eye size={16} className="ml-auto text-slate-300 hover:text-slate-900 cursor-pointer" /></td>
                   </tr>
                 );
-              }) : (
-                <tr><td colSpan={5} className="p-12 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">No matching records found.</td></tr>
+              })}
+              {visibleIncidents.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="p-12 text-center text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">No registry records found.</td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -145,20 +162,20 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
                 <ShieldCheck size={18} className="text-teal-600" />
                 <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Official Event Registry</h3>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={20} /></button>
+              <button onClick={() => setIsModalOpen(false)}><X size={20} /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Subject</label>
-                  <select required value={newIncident.student_id} onChange={(e) => setNewIncident({...newIncident, student_id: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-teal-500 outline-none">
+                  <select required value={newIncident.student_id} onChange={(e) => setNewIncident({...newIncident, student_id: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-teal-500">
                     <option value="">Select Student</option>
                     {students.map(s => <option key={s.id} value={s.id}>{s.last_name}, {s.first_name}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nature</label>
-                  <select required value={newIncident.incident_type_id} onChange={(e) => setNewIncident({...newIncident, incident_type_id: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-teal-500 outline-none">
+                  <select required value={newIncident.incident_type_id} onChange={(e) => setNewIncident({...newIncident, incident_type_id: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-teal-500">
                     <option value="">Select Type</option>
                     {incidentTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                   </select>
@@ -166,14 +183,14 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
               </div>
               <div>
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Location</label>
-                <input required type="text" value={newIncident.location} onChange={(e) => setNewIncident({...newIncident, location: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-teal-500 outline-none" placeholder="e.g. Canteen, Corridor" />
+                <input required type="text" value={newIncident.location} onChange={(e) => setNewIncident({...newIncident, location: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-teal-500" placeholder="e.g. Science Lab, Corridor" />
               </div>
               <div className="relative">
                 <div className="flex justify-between items-center mb-1">
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Event Narrative</label>
                   <div className="flex gap-2">
-                    <button type="button" onClick={handleAiRefinement} disabled={isProcessingVoice || !newIncident.description} className="text-[9px] font-black uppercase text-teal-600 hover:text-teal-800 disabled:opacity-50 flex items-center gap-1">
-                      {isProcessingVoice ? <Loader2 size={10} className="animate-spin" /> : <BrainCircuit size={10} />}
+                    <button type="button" onClick={handleAiRefinement} disabled={isProcessingAI || !newIncident.description} className="text-[9px] font-black uppercase text-teal-600 hover:text-teal-800 disabled:opacity-50 flex items-center gap-1 transition-colors">
+                      {isProcessingAI ? <Loader2 size={10} className="animate-spin" /> : <BrainCircuit size={10} />}
                       AI Refine
                     </button>
                     <button type="button" onClick={toggleDictation} className={`p-1.5 rounded-full transition-all ${isDictating ? 'bg-red-500 text-white animate-pulse' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
@@ -181,13 +198,9 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
                     </button>
                   </div>
                 </div>
-                <textarea required value={newIncident.description} onChange={(e) => setNewIncident({...newIncident, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[120px] focus:ring-1 focus:ring-teal-500 outline-none" placeholder="Detailed objective description..." />
+                <textarea required value={newIncident.description} onChange={(e) => setNewIncident({...newIncident, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[120px] outline-none focus:ring-1 focus:ring-teal-500" placeholder="Detailed objective observation..." />
               </div>
-              <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Immediate Action Taken</label>
-                <input required type="text" value={newIncident.immediate_action} onChange={(e) => setNewIncident({...newIncident, immediate_action: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-teal-500 outline-none" placeholder="Verbal warning, referral, etc." />
-              </div>
-              <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-100 active:scale-95">Submit Official Report</button>
+              <button type="submit" className="w-full bg-slate-900 text-white py-4 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95">Submit Official Report</button>
             </form>
           </div>
         </div>
