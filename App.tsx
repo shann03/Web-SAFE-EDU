@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { Database, ShieldCheck } from 'lucide-react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Students from './pages/Students';
@@ -9,194 +10,188 @@ import UserManagement from './pages/UserManagement';
 import Reports from './pages/Reports';
 import SystemLogs from './pages/SystemLogs';
 import Login from './pages/Login';
-import { User, Incident, Student, BehavioralIntervention, DeviceUsageRecord, ParentGuardian, GeneratedReport, Notification, SystemLog } from './types';
-import { MOCK_INCIDENTS, MOCK_STUDENTS, MOCK_INTERVENTIONS, MOCK_DEVICE_LOGS, MOCK_PARENTS, MOCK_REPORTS, MOCK_NOTIFICATIONS, MOCK_SYSTEM_LOGS } from './constants';
+import { User, Incident, Student, BehavioralIntervention, DeviceUsageRecord, ParentGuardian, GeneratedReport, Notification, SystemLog, IncidentType } from './types';
+import { supabase } from './services/supabaseClient';
+import { 
+  MOCK_STUDENTS, MOCK_INCIDENTS, MOCK_INCIDENT_TYPES, 
+  MOCK_INTERVENTIONS, MOCK_DEVICE_LOGS, MOCK_PARENTS, 
+  MOCK_REPORTS, MOCK_SYSTEM_LOGS, MOCK_NOTIFICATIONS,
+  PREDEFINED_ACCOUNTS
+} from './constants';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isInitializing, setIsInitializing] = useState(true);
+  const [localMode, setLocalMode] = useState(false);
   
-  // Fully hydrated state
-  const [incidents, setIncidents] = useState<Incident[]>(MOCK_INCIDENTS);
-  const [students] = useState<Student[]>(MOCK_STUDENTS);
-  const [interventions, setInterventions] = useState<BehavioralIntervention[]>(MOCK_INTERVENTIONS);
-  const [deviceLogs] = useState<DeviceUsageRecord[]>(MOCK_DEVICE_LOGS);
-  const [parents] = useState<ParentGuardian[]>(MOCK_PARENTS);
-  const [reports, setReports] = useState<GeneratedReport[]>(MOCK_REPORTS);
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [systemLogs, setSystemLogs] = useState<SystemLog[]>(MOCK_SYSTEM_LOGS);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [incidentTypes, setIncidentTypes] = useState<IncidentType[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [interventions, setInterventions] = useState<BehavioralIntervention[]>([]);
+  const [deviceLogs, setDeviceLogs] = useState<DeviceUsageRecord[]>([]);
+  const [parents, setParents] = useState<ParentGuardian[]>([]);
+  const [reports, setReports] = useState<GeneratedReport[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [registryUsers, setRegistryUsers] = useState<User[]>([]);
 
-  useEffect(() => {
-    const savedUser = localStorage.getItem('edutrack_user');
-    if (savedUser) {
+  const addSystemLog = async (action: string, category: SystemLog['category']) => {
+    if (!currentUser) return;
+    const newLog: SystemLog = {
+      id: `l-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      user_id: currentUser.id,
+      user_name: currentUser.full_name,
+      action,
+      category,
+      ip_address: localMode ? 'Local-Bypass' : 'Registry-Sync'
+    };
+    setSystemLogs(prev => [newLog, ...prev]);
+    
+    if (!localMode) {
       try {
-        setCurrentUser(JSON.parse(savedUser));
+        await supabase.from('system_audit_logs').insert([{
+          user_id: currentUser.id, user_name: currentUser.full_name, action, category, ip_address: 'Registry-Sync'
+        }]);
       } catch (e) {
-        localStorage.removeItem('edutrack_user');
+        console.error("Failed to log audit event:", e);
       }
     }
+  };
+
+  useEffect(() => {
+    // Initial data load
+    setStudents(MOCK_STUDENTS);
+    setIncidents(MOCK_INCIDENTS);
+    setIncidentTypes(MOCK_INCIDENT_TYPES);
+    setInterventions(MOCK_INTERVENTIONS);
+    setDeviceLogs(MOCK_DEVICE_LOGS);
+    setParents(MOCK_PARENTS);
+    setReports(MOCK_REPORTS);
+    setSystemLogs(MOCK_SYSTEM_LOGS);
+    setNotifications(MOCK_NOTIFICATIONS);
+    setRegistryUsers(PREDEFINED_ACCOUNTS.map(a => a.user as User));
     setIsInitializing(false);
   }, []);
 
-  const addSystemLog = (action: string, category: SystemLog['category'], user?: User) => {
-    const logUser = user || currentUser;
-    if (!logUser) return;
-    
-    const newLog: SystemLog = {
-      id: `l${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: new Date().toISOString(),
-      user_id: logUser.id,
-      user_name: logUser.full_name,
-      action,
-      category,
-      ip_address: `192.168.1.${Math.floor(Math.random() * 255)}`
-    };
-    setSystemLogs(prev => [newLog, ...prev]);
-  };
-
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    localStorage.setItem('edutrack_user', JSON.stringify(user));
-    addSystemLog('System Authentication Successful', 'Access', user);
-  };
-
-  const handleLogout = () => {
-    addSystemLog('User Initiated Logout', 'Access');
+  const handleLogout = async () => {
+    await addSystemLog('User Initiated Logout', 'Access');
     setCurrentUser(null);
-    localStorage.removeItem('edutrack_user');
+    setLocalMode(false);
     setActiveTab('Dashboard');
   };
 
-  const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
-    const newNotif: Notification = {
-      ...notif,
-      id: `n${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      isRead: false
+  const handleLocalBypass = (user: User) => {
+    setLocalMode(true);
+    setCurrentUser(user);
+    setActiveTab('Dashboard');
+    addSystemLog('Emergency Admin Bypass Activated', 'Security');
+  };
+
+  const addIncident = (inc: Partial<Incident>) => {
+    const newInc: Incident = {
+      id: `i-${Date.now()}`,
+      student_id: inc.student_id!,
+      reported_by_user_id: currentUser!.id,
+      incident_type_id: inc.incident_type_id!,
+      date_reported: new Date().toISOString(),
+      date_occurred: inc.date_occurred || new Date().toISOString(),
+      location: inc.location!,
+      description: inc.description!,
+      immediate_action: inc.immediate_action!,
+      status: 'Pending'
     };
-    setNotifications(prev => [newNotif, ...prev]);
-  };
-
-  const markAllNotificationsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-  };
-
-  const addIncident = (newIncident: Incident) => {
-    setIncidents(prev => [newIncident, ...prev]);
-    const student = students.find(s => s.id === newIncident.student_id);
-    const message = `${student?.first_name} ${student?.last_name} was reported for an event at ${newIncident.location}.`;
-    
-    addNotification({
-      title: 'New Incident Reported',
-      message,
-      type: 'incident'
-    });
-    
-    addSystemLog(`Created Incident Record for ${student?.last_name}`, 'Registry');
+    setIncidents(prev => [newInc, ...prev]);
+    addSystemLog(`Reported new incident for Student ID: ${newInc.student_id}`, 'Registry');
   };
 
   const updateIncidentStatus = (id: string, status: Incident['status']) => {
-    setIncidents(prev => prev.map(inc => inc.id === id ? { ...inc, status } : inc));
-    
-    addNotification({
-      title: 'Incident Status Updated',
-      message: `Incident #${id} is now ${status}.`,
-      type: 'system'
-    });
-
-    addSystemLog(`Modified Incident #${id} Status to ${status}`, 'Audit');
+    setIncidents(prev => prev.map(i => i.id === id ? { ...i, status } : i));
+    addSystemLog(`Updated Incident #${id} to ${status}`, 'Audit');
   };
 
-  const addGeneratedReport = (report: GeneratedReport) => {
+  const addStudent = async (data: Partial<Student>) => {
+    const s: Student = {
+      id: `s-${Date.now()}`,
+      lrn: data.lrn!,
+      first_name: data.first_name!,
+      last_name: data.last_name!,
+      date_of_birth: data.date_of_birth!,
+      gender: data.gender || 'Male',
+      grade_level: data.grade_level!,
+      section: data.section!,
+      address: data.address!,
+      contact_number: data.contact_number || 'N/A'
+    };
+    setStudents(prev => [s, ...prev]);
+    addSystemLog(`Registered new student: ${s.first_name} ${s.last_name}`, 'Registry');
+    return { data: s, error: null };
+  };
+
+  const addIntervention = (data: Partial<BehavioralIntervention>) => {
+    const int: BehavioralIntervention = {
+      id: `int-${Date.now()}`,
+      student_id: data.student_id!,
+      assigned_by_user_id: currentUser!.id,
+      intervention_type: data.intervention_type!,
+      description: data.description!,
+      start_date: data.start_date!,
+      status: 'Active'
+    };
+    setInterventions(prev => [int, ...prev]);
+    addSystemLog(`Assigned ${int.intervention_type} to Student ID: ${int.student_id}`, 'Registry');
+  };
+
+  const generateReport = (report: GeneratedReport) => {
     setReports(prev => [report, ...prev]);
-    
-    addNotification({
-      title: 'Report Generated',
-      message: `The report "${report.title}" is now ready for review.`,
-      type: 'report'
-    });
-
-    addSystemLog(`Generated System Report: ${report.type}`, 'Audit');
+    addSystemLog(`Generated formal report: ${report.title}`, 'Audit');
   };
 
-  if (isInitializing) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="w-12 h-12 bg-slate-900 rounded-xl mb-4"></div>
-          <div className="h-4 w-32 bg-slate-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!currentUser) {
-    return <Login onLogin={handleLogin} />;
-  }
+  const updateRegistryUser = (userId: string, updates: Partial<User>) => {
+    setRegistryUsers(prev => prev.map(u => u.id === userId ? { ...u, ...updates } : u));
+    addSystemLog(`Updated registry permissions for User ID: ${userId}`, 'Security');
+  };
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'Dashboard':
-        return <Dashboard incidents={incidents} students={students} />;
-      case 'Students':
-        return (
-          <Students 
-            currentUser={currentUser} 
-            incidents={incidents} 
-            students={students} 
-            searchQuery={searchQuery}
-            parents={parents}
-            deviceLogs={deviceLogs}
-          />
-        );
-      case 'Incidents':
-        return (
-          <Incidents 
-            currentUser={currentUser} 
-            incidents={incidents} 
-            students={students} 
-            onAddIncident={addIncident} 
-            onUpdateStatus={updateIncidentStatus} 
-            searchQuery={searchQuery} 
-          />
-        );
-      case 'Interventions':
-        return <Interventions currentUser={currentUser} incidents={incidents} students={students} interventions={interventions} />;
-      case 'Reports':
-        return <Reports currentUser={currentUser} reports={reports} onGenerateReport={addGeneratedReport} />;
-      case 'System Logs':
-        return <SystemLogs logs={systemLogs} />;
-      case 'User Management':
-        return <UserManagement />;
-      default:
-        return (
-          <div className="flex flex-col items-center justify-center h-full text-slate-400 p-12 text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-              <span className="text-2xl">⚙️</span>
-            </div>
-            <h2 className="text-xl font-bold mb-2">{activeTab} Section</h2>
-            <p className="max-w-md">The {activeTab} module is restricted or currently being optimized for your role as a {currentUser.role}.</p>
-          </div>
-        );
+      case 'Dashboard': return <Dashboard incidents={incidents} students={students} deviceLogs={deviceLogs} />;
+      case 'Students': return <Students currentUser={currentUser!} incidents={incidents} students={students} searchQuery={searchQuery} parents={parents} deviceLogs={deviceLogs} onAddStudent={addStudent} />;
+      case 'Incidents': return <Incidents currentUser={currentUser!} incidents={incidents} students={students} incidentTypes={incidentTypes} onAddIncident={addIncident} onUpdateStatus={updateIncidentStatus} searchQuery={searchQuery} />;
+      case 'Interventions': return <Interventions currentUser={currentUser!} students={students} interventions={interventions} onAddIntervention={addIntervention} />;
+      case 'Reports': return <Reports currentUser={currentUser!} reports={reports} onGenerateReport={generateReport} />;
+      case 'System Logs': return <SystemLogs logs={systemLogs} />;
+      case 'User Management': return <UserManagement localUsers={registryUsers} onUpdateUser={updateRegistryUser} onSync={async () => { await addSystemLog('Manual Registry Synchronization', 'Audit'); }} />;
+      default: return <Dashboard incidents={incidents} students={students} deviceLogs={deviceLogs} />;
     }
   };
 
+  if (isInitializing) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-900"><Loader2 className="animate-spin text-teal-500" /></div>;
+  }
+
+  if (!currentUser) return <Login onLogin={setCurrentUser} onLocalBypass={handleLocalBypass} />;
+
   return (
-    <Layout 
-      user={currentUser} 
-      activeTab={activeTab} 
-      setActiveTab={setActiveTab}
-      onLogout={handleLogout}
-      searchQuery={searchQuery}
-      setSearchQuery={setSearchQuery}
-      notifications={notifications}
-      onMarkRead={markAllNotificationsRead}
-    >
+    <Layout user={currentUser} activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} searchQuery={searchQuery} setSearchQuery={setSearchQuery} notifications={notifications} onMarkRead={() => setNotifications(prev => prev.map(n => ({...n, isRead: true})))}>
+      {localMode && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-3">
+            <Database size={18} className="text-amber-700" />
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-amber-900">Local Resilience Mode Active</p>
+              <p className="text-[10px] text-amber-700 font-medium">Bypassing Supabase Registry. All actions are simulated.</p>
+            </div>
+          </div>
+          <button onClick={() => window.location.reload()} className="px-3 py-1.5 bg-amber-900 text-white text-[9px] font-black uppercase tracking-widest rounded-lg">Reconnect Sync</button>
+        </div>
+      )}
       {renderContent()}
     </Layout>
   );
 };
+
+const Loader2 = ({ className }: { className?: string }) => <div className={`w-8 h-8 border-4 border-slate-700 border-t-teal-500 rounded-full animate-spin ${className}`}></div>;
 
 export default App;

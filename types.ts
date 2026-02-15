@@ -67,6 +67,8 @@ export interface DeviceUsageRecord {
 
 export interface ParentGuardian {
   id: string;
+  // Fix: Added student_id to allow linking parents to students in the application logic
+  student_id: string;
   first_name: string;
   last_name: string;
   relationship_to_student: string;

@@ -1,7 +1,8 @@
 {
-  "name": "Copy of Copy of EduTrack Incident & Behavior Management",
-  "description": "A comprehensive student incident tracking and behavioral intervention system based on a detailed relational database schema. Features dashboard analytics, student profiling, and AI-driven behavioral analysis.",
+  "name": "SAFE-EDU | Student Assistance & Digital Safety",
+  "description": "A comprehensive student incident tracking and behavioral intervention system. Features biometric verification, AI welfare checks, and digital safety monitoring.",
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "microphone"
   ]
 }
