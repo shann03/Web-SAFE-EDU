@@ -1,8 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { NAV_ITEMS } from '../constants';
-import { User, Notification } from '../types';
-import { LogOut, Bell, Search, ShieldCheck, AlertCircle, FileText, Settings, Clock, CheckCircle } from 'lucide-react';
+import { User, Notification, DeviceUsageRecord } from '../types';
+import { 
+  LogOut, Bell, Search, ShieldCheck, AlertCircle, 
+  FileText, Settings, Clock, CheckCircle, Tablet,
+  ShieldAlert, Zap, X, ChevronRight, AlertTriangle
+} from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +18,9 @@ interface LayoutProps {
   setSearchQuery: (query: string) => void;
   notifications: Notification[];
   onMarkRead: () => void;
+  deviceLogs?: DeviceUsageRecord[];
+  onDismissLog?: (id: string) => void;
+  onEscalateLog?: (log: DeviceUsageRecord) => void;
 }
 
 const Layout: React.FC<LayoutProps> = ({ 
@@ -25,17 +32,26 @@ const Layout: React.FC<LayoutProps> = ({
   searchQuery, 
   setSearchQuery,
   notifications,
-  onMarkRead
+  onMarkRead,
+  deviceLogs = [],
+  onDismissLog,
+  onEscalateLog
 }) => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [isSafetyOpen, setIsSafetyOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const safetyRef = useRef<HTMLDivElement>(null);
   const filteredNavItems = NAV_ITEMS.filter(item => item.roles.includes(user.role));
   const unreadCount = notifications.filter(n => !n.isRead).length;
+  const flaggedLogs = deviceLogs.filter(l => l.flagged);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
         setIsNotifOpen(false);
+      }
+      if (safetyRef.current && !safetyRef.current.contains(event.target as Node)) {
+        setIsSafetyOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -63,7 +79,7 @@ const Layout: React.FC<LayoutProps> = ({
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden relative">
       <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl z-20">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-2">
@@ -186,12 +202,95 @@ const Layout: React.FC<LayoutProps> = ({
           </div>
         </header>
 
-        <section className="flex-1 overflow-y-auto p-8 bg-slate-50/50">
+        <section className="flex-1 overflow-y-auto p-8 bg-slate-50/50 relative">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </section>
       </main>
+
+      {/* Global Safety Monitor Hub (Available on all pages) */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end" ref={safetyRef}>
+        {isSafetyOpen && (
+          <div className="mb-4 w-96 bg-slate-900 text-white rounded-2xl shadow-2xl border border-white/10 overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+            <div className="p-4 bg-white/5 border-b border-white/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="text-amber-400" size={16} />
+                <h4 className="text-[10px] font-black uppercase tracking-widest">Global Safety Monitor</h4>
+              </div>
+              <button onClick={() => setIsSafetyOpen(false)} className="text-white/40 hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="max-h-[400px] overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              {flaggedLogs.length > 0 ? flaggedLogs.map(log => (
+                <div key={log.id} className="p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all group">
+                   <div className="flex justify-between items-start mb-1">
+                      <span className="text-[9px] font-black text-amber-500 uppercase flex items-center gap-1">
+                        <Zap size={10} fill="currentColor" /> Policy Alert
+                      </span>
+                      <span className="text-[9px] font-bold text-slate-500">{new Date(log.usage_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                   </div>
+                   <p className="text-xs font-bold text-white mb-2 italic line-clamp-2">"{log.activity_description}"</p>
+                   <div className="flex gap-2">
+                      <button 
+                        onClick={() => onEscalateLog?.(log)}
+                        className="flex-1 py-1.5 bg-red-600 text-white rounded text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-colors"
+                      >
+                        Escalate
+                      </button>
+                      <button 
+                        onClick={() => onDismissLog?.(log.id)}
+                        className="flex-1 py-1.5 bg-white/10 text-white rounded text-[9px] font-black uppercase tracking-widest hover:bg-white/20 transition-colors"
+                      >
+                        Dismiss
+                      </button>
+                   </div>
+                </div>
+              )) : (
+                <div className="p-10 text-center text-slate-500">
+                   <ShieldCheck size={32} className="mx-auto text-teal-500 opacity-20 mb-2" />
+                   <p className="text-[10px] font-black uppercase tracking-widest">All subjects compliant</p>
+                </div>
+              )}
+            </div>
+            <div className="p-4 bg-white/5 border-t border-white/5">
+               <button 
+                onClick={() => { setActiveTab('Digital Safety'); setIsSafetyOpen(false); }}
+                className="w-full py-2 flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-teal-400 hover:text-teal-300 transition-colors"
+               >
+                 Open Safety Console <ChevronRight size={10} />
+               </button>
+            </div>
+          </div>
+        )}
+        
+        <button 
+          onClick={() => setIsSafetyOpen(!isSafetyOpen)}
+          className={`group flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border-2 transition-all active:scale-95 ${
+            flaggedLogs.length > 0 
+              ? 'bg-red-600 border-red-500 text-white animate-pulse' 
+              : 'bg-slate-900 border-slate-800 text-white'
+          }`}
+        >
+          {flaggedLogs.length > 0 ? (
+            <AlertTriangle size={20} className="text-amber-300" />
+          ) : (
+            <ShieldCheck size={20} className="text-teal-400" />
+          )}
+          <div className="text-left hidden group-hover:block animate-in fade-in slide-in-from-right-2">
+            <p className="text-[10px] font-black uppercase tracking-widest leading-none">Safety Monitor</p>
+            <p className="text-[8px] font-bold opacity-60 uppercase tracking-tighter mt-1">
+              {flaggedLogs.length} Alerts Active
+            </p>
+          </div>
+          {flaggedLogs.length > 0 && (
+            <span className="w-5 h-5 bg-white text-red-600 rounded-full flex items-center justify-center text-[10px] font-black">
+              {flaggedLogs.length}
+            </span>
+          )}
+        </button>
+      </div>
     </div>
   );
 };

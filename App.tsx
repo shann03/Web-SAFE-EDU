@@ -287,7 +287,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center space-y-4">
           <Loader2 className="animate-spin text-slate-900 mx-auto" size={32} />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Bootstrapping Demo Registry...</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Bootstrapping Registry Environment...</p>
         </div>
       </div>
     );
@@ -296,7 +296,19 @@ const App: React.FC = () => {
   if (!currentUser) return <Login onLogin={setCurrentUser} />;
 
   return (
-    <Layout user={currentUser} activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} searchQuery={searchQuery} setSearchQuery={setSearchQuery} notifications={notifications} onMarkRead={() => {}}>
+    <Layout 
+      user={currentUser} 
+      activeTab={activeTab} 
+      setActiveTab={setActiveTab} 
+      onLogout={handleLogout} 
+      searchQuery={searchQuery} 
+      setSearchQuery={setSearchQuery} 
+      notifications={notifications} 
+      onMarkRead={() => {}}
+      deviceLogs={deviceLogs}
+      onDismissLog={handleDismissLog}
+      onEscalateLog={handleEscalateLog}
+    >
       {renderContent()}
     </Layout>
   );
