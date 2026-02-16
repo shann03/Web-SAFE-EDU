@@ -11,7 +11,6 @@ import { PREDEFINED_ACCOUNTS } from '../constants';
 
 interface LoginProps {
   onLogin: (user: User) => void;
-  onLocalBypass: (user: User) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -20,7 +19,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [studentLrn, setStudentLrn] = useState('');
-  const [role, setRole] = useState<'Teacher' | 'Counselor' | 'Parent' | 'Administrator'>('Teacher');
+  const [role, setRole] = useState<'Teacher' | 'Counselor' | 'Parent'>('Teacher');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +31,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     try {
       if (isLoginMode) {
+        // First check predefined for local login
         const predefined = PREDEFINED_ACCOUNTS.find(a => a.email === email && a.password === password);
         if (predefined) {
           onLogin(predefined.user as User);
@@ -74,7 +74,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           }
         });
 
-        if (signUpError) throw signUpError;
+        if (signUpError) {
+          if (signUpError.message.toLowerCase().includes("confirmation email") || signUpError.status === 429) {
+            throw new Error("Authentication server is currently throttled. Please try again later or contact support.");
+          }
+          throw signUpError;
+        }
         
         if (signUpData.user) {
           await supabase.from('profiles').insert([{
@@ -99,10 +104,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden p-4">
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 via-slate-900 to-teal-500"></div>
       
-      <div className="w-full max-w-md relative z-10 space-y-4">
+      <div className="w-full max-w-md relative z-10 space-y-6">
         <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
           <div className="px-6 py-2.5 bg-slate-900 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -124,12 +129,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
 
           <div className="px-10 flex border-b border-slate-100">
-            <button onClick={() => setIsLoginMode(true)} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${isLoginMode ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>Sign In</button>
-            <button onClick={() => setIsLoginMode(false)} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${!isLoginMode ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>Register</button>
+            <button onClick={() => { setIsLoginMode(true); setError(''); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${isLoginMode ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>Sign In</button>
+            <button onClick={() => { setIsLoginMode(false); setError(''); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${!isLoginMode ? 'text-slate-900 border-b-2 border-slate-900' : 'text-slate-400 hover:text-slate-600'}`}>Register</button>
           </div>
 
           <form onSubmit={handleSubmit} className="p-10 pt-8 pb-12 space-y-4">
-            {error && <div className="p-3 bg-red-50 text-red-600 text-[10px] font-bold uppercase rounded-lg border border-red-100 flex items-center gap-2 animate-pulse"><AlertTriangle size={14}/> {error}</div>}
+            {error && (
+              <div className="p-4 bg-red-50 text-red-700 text-[10px] font-bold uppercase rounded-xl border border-red-100 flex items-center gap-2 animate-in slide-in-from-top-2">
+                <AlertTriangle size={16} className="shrink-0 text-red-600" /> 
+                <span>{error}</span>
+              </div>
+            )}
             
             <div className="space-y-4">
               {!isLoginMode && (
@@ -175,9 +185,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <button type="submit" disabled={isLoading} className="w-full py-4 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase shadow-2xl active:scale-95 disabled:opacity-70 transition-all hover:bg-slate-800 tracking-[0.2em]">
               {isLoading ? <Loader2 size={18} className="animate-spin mx-auto" /> : isLoginMode ? 'Authorize Session' : 'Create Authority Profile'}
             </button>
-            {isLoginMode && (
-              <button type="button" className="w-full text-[9px] font-black uppercase text-slate-400 tracking-widest hover:text-slate-600 transition-colors">Emergency Credential Recovery</button>
-            )}
           </form>
         </div>
       </div>

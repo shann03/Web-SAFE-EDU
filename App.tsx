@@ -9,6 +9,7 @@ import Interventions from './pages/Interventions';
 import UserManagement from './pages/UserManagement';
 import Reports from './pages/Reports';
 import SystemLogs from './pages/SystemLogs';
+import DigitalSafety from './pages/DigitalSafety';
 import Login from './pages/Login';
 import { User, Incident, Student, BehavioralIntervention, DeviceUsageRecord, ParentGuardian, GeneratedReport, Notification, SystemLog, IncidentType } from './types';
 import { supabase } from './services/supabaseClient';
@@ -48,7 +49,7 @@ const App: React.FC = () => {
 
   const filteredStudents = useMemo(() => {
     const base = mergeRecords(MOCK_STUDENTS, allStudents);
-    if (isParent && currentUser.linked_lrn) {
+    if (isParent && currentUser?.linked_lrn) {
       return base.filter(s => s.lrn === currentUser.linked_lrn || s.id.startsWith('mock-'));
     }
     return base;
@@ -56,7 +57,7 @@ const App: React.FC = () => {
 
   const filteredIncidents = useMemo(() => {
     const base = mergeRecords(MOCK_INCIDENTS, allIncidents);
-    if (isParent && currentUser.linked_lrn) {
+    if (isParent && currentUser?.linked_lrn) {
       const student = filteredStudents.find(s => s.lrn === currentUser.linked_lrn);
       return base.filter(inc => inc.student_id === student?.id);
     }
@@ -65,7 +66,7 @@ const App: React.FC = () => {
 
   const filteredInterventions = useMemo(() => {
     const base = mergeRecords(MOCK_INTERVENTIONS, interventions);
-    if (isParent && currentUser.linked_lrn) {
+    if (isParent && currentUser?.linked_lrn) {
       const student = filteredStudents.find(s => s.lrn === currentUser.linked_lrn);
       return base.filter(int => int.student_id === student?.id);
     }
@@ -120,7 +121,7 @@ const App: React.FC = () => {
       if (incidentsData) setAllIncidents(incidentsData);
       setIncidentTypes(typesData || MOCK_INCIDENT_TYPES);
       if (interventionsData) setInterventions(interventionsData);
-      setDeviceLogs(logsData || MOCK_DEVICE_LOGS);
+      setDeviceLogs(mergeRecords(MOCK_DEVICE_LOGS, logsData || []));
       setParents(parentsData || MOCK_PARENTS);
       setReports(reportsData?.length ? reportsData : MOCK_REPORTS);
       setSystemLogs(sysLogsData?.length ? sysLogsData : MOCK_SYSTEM_LOGS);
@@ -168,14 +169,20 @@ const App: React.FC = () => {
     setActiveTab('Dashboard');
   };
 
+  const handleLrnSearch = (lrn: string) => {
+    setSearchQuery(lrn);
+    setActiveTab('Students');
+  };
+
   const handleAddIncident = useCallback(async (newInc: Partial<Incident>) => {
+    if (!currentUser) return;
     const incData = {
       student_id: newInc.student_id,
-      reported_by_user_id: currentUser!.id,
-      incident_type_id: newInc.incident_type_id,
+      reported_by_user_id: currentUser.id,
+      incident_type_id: newInc.incident_type_id || 'it5',
       date_reported: new Date().toISOString(),
       date_occurred: newInc.date_occurred || new Date().toISOString(),
-      location: newInc.location,
+      location: newInc.location || 'Digital Environment',
       description: newInc.description,
       immediate_action: newInc.immediate_action || 'Registry Entry',
       status: 'Pending',
@@ -193,6 +200,22 @@ const App: React.FC = () => {
     }
   }, [currentUser, addSystemLog, isParent]);
 
+  const handleDismissLog = useCallback(async (id: string) => {
+    setDeviceLogs(prev => prev.map(log => log.id === id ? { ...log, flagged: false } : log));
+    await supabase.from('device_logs').update({ flagged: false }).eq('id', id);
+    addSystemLog(`Digital Safety Alert ${id} dismissed.`, 'Security');
+  }, [addSystemLog]);
+
+  const handleEscalateLog = useCallback(async (log: DeviceUsageRecord) => {
+    await handleAddIncident({
+      student_id: log.student_id,
+      description: `Automated escalation from Digital Safety Monitor: ${log.activity_description}`,
+      incident_type_id: 'it5', // Digital Misuse
+      location: 'School Network'
+    });
+    handleDismissLog(log.id);
+  }, [handleAddIncident, handleDismissLog]);
+
   const handleAddStudent = useCallback(async (studentData: Partial<Student>) => {
     const { data, error } = await supabase.from('students').insert([studentData]).select();
     if (!error && data) {
@@ -207,23 +230,14 @@ const App: React.FC = () => {
   }, [addSystemLog]);
 
   const handleAddIntervention = useCallback(async (intData: Partial<BehavioralIntervention>) => {
+    if (!currentUser) return;
     const payload = {
       ...intData,
-      assigned_by_user_id: currentUser!.id,
+      assigned_by_user_id: currentUser.id,
       start_date: new Date().toISOString(),
       status: 'Active',
-      history: [
-        { 
-          id: `m-init-${Date.now()}`, 
-          date: new Date().toISOString(), 
-          title: 'Case Initialized', 
-          notes: 'Dossier opened in the Registry.', 
-          outcome: 'Plan active', 
-          recorded_by: currentUser!.full_name 
-        }
-      ]
+      history: [{ id: `m-init-${Date.now()}`, date: new Date().toISOString(), title: 'Case Initialized', notes: 'Dossier opened in the Registry.', outcome: 'Plan active', recorded_by: currentUser.full_name }]
     };
-
     const { data, error } = await supabase.from('interventions').insert([payload]).select();
     if (!error && data) {
       setInterventions(prev => [data[0] as BehavioralIntervention, ...prev]);
@@ -238,22 +252,33 @@ const App: React.FC = () => {
     if (!error) {
       setAllIncidents(prev => prev.map(inc => inc.id === id ? { ...inc, status } : inc));
       addSystemLog(`Incident ${id} updated to ${status}`, 'Audit');
-    } else {
-      setAllIncidents(prev => prev.map(inc => inc.id === id ? { ...inc, status } : inc));
     }
   }, [addSystemLog]);
 
   const renderContent = () => {
     if (!currentUser) return null;
     switch (activeTab) {
-      case 'Dashboard': return <Dashboard incidents={filteredIncidents} students={filteredStudents} deviceLogs={deviceLogs} />;
-      case 'Students': return <Students currentUser={currentUser} incidents={filteredIncidents} students={filteredStudents} searchQuery={searchQuery} parents={parents} deviceLogs={deviceLogs} onAddStudent={handleAddStudent} />;
-      case 'Incidents': return <Incidents currentUser={currentUser} incidents={filteredIncidents} students={filteredStudents} incidentTypes={incidentTypes} onAddIncident={handleAddIncident} onUpdateStatus={handleUpdateStatus} searchQuery={searchQuery} />;
-      case 'Interventions': return <Interventions currentUser={currentUser} students={filteredStudents} interventions={filteredInterventions} onAddIntervention={handleAddIntervention} />;
-      case 'Reports': return <Reports currentUser={currentUser} reports={reports} onGenerateReport={(data) => setReports(prev => [data, ...prev])} />;
-      case 'System Logs': return <SystemLogs logs={systemLogs} />;
-      case 'User Management': return <UserManagement localUsers={allUsers} currentUser={currentUser} onUpdateUser={(id, updates) => setAllUsers(prev => prev.map(u => u.id === id ? {...u, ...updates} : u))} onSync={fetchRegistryData} />;
-      default: return <Dashboard incidents={filteredIncidents} students={filteredStudents} deviceLogs={deviceLogs} />;
+      case 'Dashboard': 
+        return <Dashboard 
+          currentUser={currentUser} incidents={filteredIncidents} students={filteredStudents} deviceLogs={deviceLogs} onSearchLRN={handleLrnSearch}
+          onDismissLog={handleDismissLog} onEscalateLog={handleEscalateLog}
+        />;
+      case 'Students': 
+        return <Students currentUser={currentUser} incidents={filteredIncidents} students={filteredStudents} searchQuery={searchQuery} parents={parents} deviceLogs={deviceLogs} onAddStudent={handleAddStudent} />;
+      case 'Incidents': 
+        return <Incidents currentUser={currentUser} incidents={filteredIncidents} students={filteredStudents} incidentTypes={incidentTypes} onAddIncident={handleAddIncident} onUpdateStatus={handleUpdateStatus} searchQuery={searchQuery} />;
+      case 'Interventions': 
+        return <Interventions currentUser={currentUser} students={filteredStudents} interventions={filteredInterventions} onAddIntervention={handleAddIntervention} />;
+      case 'Digital Safety':
+        return <DigitalSafety students={filteredStudents} deviceLogs={deviceLogs} onDismissLog={handleDismissLog} onEscalateLog={handleEscalateLog} />;
+      case 'Reports': 
+        return <Reports currentUser={currentUser} reports={reports} onGenerateReport={(data) => setReports(prev => [data, ...prev])} />;
+      case 'System Logs': 
+        return <SystemLogs logs={systemLogs} />;
+      case 'User Management': 
+        return <UserManagement localUsers={allUsers} currentUser={currentUser} onUpdateUser={(id, updates) => setAllUsers(prev => prev.map(u => u.id === id ? {...u, ...updates} : u))} onSync={fetchRegistryData} />;
+      default: 
+        return <Dashboard currentUser={currentUser} incidents={filteredIncidents} students={filteredStudents} deviceLogs={deviceLogs} onSearchLRN={handleLrnSearch} />;
     }
   };
 
@@ -268,7 +293,7 @@ const App: React.FC = () => {
     );
   }
 
-  if (!currentUser) return <Login onLogin={setCurrentUser} onLocalBypass={() => {}} />;
+  if (!currentUser) return <Login onLogin={setCurrentUser} />;
 
   return (
     <Layout user={currentUser} activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} searchQuery={searchQuery} setSearchQuery={setSearchQuery} notifications={notifications} onMarkRead={() => {}}>

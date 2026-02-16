@@ -8,6 +8,7 @@ import {
   ClipboardList, 
   Monitor, 
   Settings,
+  Tablet
 } from 'lucide-react';
 import { Student, Incident, IncidentType, User, UserRole, ParentGuardian, BehavioralIntervention, DeviceUsageRecord, GeneratedReport, Notification, SystemLog } from './types';
 
@@ -22,6 +23,7 @@ export const NAV_ITEMS: NavItem[] = [
   { name: 'Incidents', icon: <AlertTriangle size={20} />, roles: ['Teacher', 'Counselor', 'Parent', 'Administrator'] },
   { name: 'Students', icon: <Users size={20} />, roles: ['Teacher', 'Counselor', 'Administrator'] },
   { name: 'Interventions', icon: <ShieldAlert size={20} />, roles: ['Teacher', 'Counselor', 'Parent', 'Administrator'] },
+  { name: 'Digital Safety', icon: <Tablet size={20} />, roles: ['Teacher', 'Counselor', 'Administrator'] },
   { name: 'Reports', icon: <ClipboardList size={20} />, roles: ['Counselor', 'Parent', 'Administrator'] },
   { name: 'System Logs', icon: <Monitor size={20} />, roles: ['Administrator'] },
   { name: 'User Management', icon: <Settings size={20} />, roles: ['Administrator'] },
@@ -39,7 +41,7 @@ export const MOCK_STUDENTS: Student[] = [
     section: 'Mabini', 
     address: 'Bgy 1, Quezon City', 
     contact_number: '0917-123-4567',
-    background: 'Rafael is a highly creative student with a passion for digital arts. He often struggles with time management during high-pressure exam periods, which sometimes leads to minor behavioral outbursts. He has a strong support system at home and responds well to positive reinforcement from mentors.'
+    background: 'Rafael is a highly creative student with a passion for digital arts. He often struggles with time management during high-pressure exam periods.'
   },
   { 
     id: 's2', 
@@ -52,7 +54,7 @@ export const MOCK_STUDENTS: Student[] = [
     section: 'Rizal', 
     address: 'Bgy 5, Manila', 
     contact_number: '0918-234-5678',
-    background: 'Maria Clara is an academic achiever but has recently shown signs of social anxiety. She is quiet in class and tends to isolate herself during breaks. Her background indicates a history of moving between schools frequently, making it difficult for her to form long-term peer connections.'
+    background: 'Maria Clara is an academic achiever but has recently shown signs of social anxiety.'
   },
   { 
     id: 's3', 
@@ -65,33 +67,7 @@ export const MOCK_STUDENTS: Student[] = [
     section: 'Bonifacio', 
     address: 'Bgy 12, Makati', 
     contact_number: '0919-345-6789',
-    background: 'Ethan is an athletic student who excels in team sports. He occasionally faces challenges with verbal altercations when he feels a sense of injustice. He is currently under a "Strategic Focus" intervention to improve his conflict resolution skills through peer-mediation training.'
-  },
-  { 
-    id: 's4', 
-    lrn: '101234567893', 
-    first_name: 'Sofia', 
-    last_name: 'Ramos', 
-    date_of_birth: '2010-08-05', 
-    gender: 'Female', 
-    grade_level: '8', 
-    section: 'Luna', 
-    address: 'Bgy 3, Pasig', 
-    contact_number: '0920-456-7890',
-    background: 'Sofia is very technically savvy but was previously flagged for "Digital Misuse" (accessing non-educational sites). She is now a student ambassador for the school\'s Cyber-Safety program, helping peers understand the importance of maintaining a clean digital footprint.'
-  },
-  { 
-    id: 's5', 
-    lrn: '101234567894', 
-    first_name: 'Juan Miguel', 
-    last_name: 'Luna', 
-    date_of_birth: '2011-03-25', 
-    gender: 'Male', 
-    grade_level: '7', 
-    section: 'Del Pilar', 
-    address: 'Bgy 8, Taguig', 
-    contact_number: '0921-567-8901',
-    background: 'Juan is a transition-year student who is still adjusting to the workload of secondary education. He is friendly and helpful but has a history of tardiness. Educators are focused on building his organizational habits and morning routines.'
+    background: 'Ethan is an athletic student who excels in team sports. He occasionally faces challenges with verbal altercations.'
   },
 ];
 
@@ -107,7 +83,7 @@ export const MOCK_INCIDENT_TYPES: IncidentType[] = [
 
 export const MOCK_INCIDENTS: Incident[] = Array.from({ length: 8 }).map((_, i) => ({
   id: `mock-inc-${i + 1}`,
-  student_id: `s${(i % 5) + 1}`,
+  student_id: `s${(i % 3) + 1}`,
   reported_by_user_id: 'u_teacher',
   incident_type_id: `it${(i % 7) + 1}`,
   date_reported: new Date(Date.now() - i * 86400000).toISOString(),
@@ -128,8 +104,6 @@ export const MOCK_USERS: User[] = [
 
 export const MOCK_SYSTEM_LOGS: SystemLog[] = [
   { id: 'log-1', timestamp: new Date().toISOString(), user_id: 'u_admin', user_name: 'System Admin', action: 'Registry database synchronized', category: 'Registry', ip_address: '127.0.0.1' },
-  { id: 'log-2', timestamp: new Date(Date.now() - 3600000).toISOString(), user_id: 'u_admin', user_name: 'System Admin', action: 'User "parent@gmail.com" authorized', category: 'Security', ip_address: '127.0.0.1' },
-  { id: 'log-3', timestamp: new Date(Date.now() - 7200000).toISOString(), user_id: 'u_teacher', user_name: 'Ms. Sarah Teacher', action: 'Incident report I-9042 submitted', category: 'Registry', ip_address: '192.168.1.45' },
 ];
 
 export const MOCK_INTERVENTIONS: BehavioralIntervention[] = [
@@ -141,39 +115,14 @@ export const MOCK_INTERVENTIONS: BehavioralIntervention[] = [
     description: 'Weekly anger management and social skills training.', 
     start_date: new Date(Date.now() - 1209600000).toISOString(), 
     status: 'Active',
-    related_incident_ids: ['mock-inc-1', 'mock-inc-6'],
-    attachments: [
-      { id: 'att-1', name: 'Intake_Assessment_Form.pdf', type: 'PDF', size: '450 KB', date_attached: new Date(Date.now() - 1209600000).toISOString() },
-      { id: 'att-2', name: 'Parental_Consent_Release.pdf', type: 'PDF', size: '210 KB', date_attached: new Date(Date.now() - 1123200000).toISOString() }
-    ],
     history: [
-      { id: 'm1', date: new Date(Date.now() - 1123200000).toISOString(), title: 'Initial Assessment', notes: 'Rafael was hesitant but acknowledged the impact of his stress on others.', outcome: 'Proceed with weekly sessions', recorded_by: 'Dr. John Counselor' },
-      { id: 'm2', date: new Date(Date.now() - 604800000).toISOString(), title: 'Session 1: Stress Triggers', notes: 'Identified that math exams are a major trigger. Developed breathing exercises.', outcome: 'Positive engagement', recorded_by: 'Dr. John Counselor' },
-      { id: 'm3', date: new Date(Date.now() - 86400000).toISOString(), title: 'Parent Check-in', notes: 'Mother reports Rafael is using exercises at home.', outcome: 'Visible progress in self-regulation', recorded_by: 'Dr. John Counselor' }
-    ]
-  },
-  { 
-    id: 'int-2', 
-    student_id: 's2', 
-    assigned_by_user_id: 'u_counselor', 
-    intervention_type: 'Parent Meeting', 
-    description: 'Discussion on digital habits and academic focus.', 
-    start_date: new Date(Date.now() - 172800000).toISOString(), 
-    status: 'Completed',
-    related_incident_ids: ['mock-inc-2'],
-    attachments: [
-      { id: 'att-3', name: 'Digital_Usage_Contract.pdf', type: 'PDF', size: '1.2 MB', date_attached: new Date(Date.now() - 172800000).toISOString() }
-    ],
-    history: [
-      { id: 'm4', date: new Date(Date.now() - 172800000).toISOString(), title: 'Tripartite Meeting', notes: 'Discussed balancing social media use with study hours.', outcome: 'Signed digital usage contract', recorded_by: 'Dr. John Counselor' },
-      { id: 'm5', date: new Date().toISOString(), title: 'Final Review', notes: 'Student has shown consistent attendance and improved grades.', outcome: 'Case closed - monitoring status', recorded_by: 'Dr. John Counselor' }
+      { id: 'm1', date: new Date(Date.now() - 1123200000).toISOString(), title: 'Initial Assessment', notes: 'Rafael was hesitant but acknowledged the impact of his stress on others.', outcome: 'Proceed with weekly sessions', recorded_by: 'Dr. John Counselor' }
     ]
   },
 ];
 
 export const MOCK_REPORTS: GeneratedReport[] = [
   { id: 'rep-1', title: 'Q3 Behavioral Summary', type: 'Incident Summary', generated_by: 'Dr. John Counselor', date_generated: new Date().toISOString(), status: 'Ready', file_size: '2.4 MB' },
-  { id: 'rep-2', title: 'Digital Safety Audit - Nov', type: 'Digital Safety Audit', generated_by: 'System Admin', date_generated: new Date(Date.now() - 86400000).toISOString(), status: 'Ready', file_size: '1.8 MB' },
 ];
 
 export const MOCK_PARENTS: ParentGuardian[] = MOCK_STUDENTS.map(s => ({
@@ -189,34 +138,23 @@ export const MOCK_PARENTS: ParentGuardian[] = MOCK_STUDENTS.map(s => ({
 }));
 
 export const MOCK_DEVICE_LOGS: DeviceUsageRecord[] = [
-  { id: 'dl-1', student_id: 's1', device_id: 'tab-01', usage_start: new Date().toISOString(), usage_end: new Date().toISOString(), activity_description: 'Accessing unauthorized gaming site during class.', flagged: true },
-  { id: 'dl-2', student_id: 's3', device_id: 'tab-05', usage_start: new Date().toISOString(), usage_end: new Date().toISOString(), activity_description: 'Educational research on Wikipedia.', flagged: false },
+  { id: 'dl-1', student_id: 's1', device_id: 'tab-01', usage_start: new Date(Date.now() - 1800000).toISOString(), usage_end: new Date().toISOString(), activity_description: 'Accessing restricted social media domain during instruction.', flagged: true },
+  { id: 'dl-2', student_id: 's3', device_id: 'tab-05', usage_start: new Date(Date.now() - 3600000).toISOString(), usage_end: new Date().toISOString(), activity_description: 'Academic research on National Geographic.', flagged: false },
+  { id: 'dl-3', student_id: 's2', device_id: 'tab-02', usage_start: new Date(Date.now() - 4500000).toISOString(), usage_end: new Date().toISOString(), activity_description: 'Attempted to bypass network firewall via proxy.', flagged: true },
+  { id: 'dl-4', student_id: 's1', device_id: 'tab-01', usage_start: new Date(Date.now() - 9000000).toISOString(), usage_end: new Date().toISOString(), activity_description: 'Late-night device usage detected after 10 PM curfew.', flagged: true },
+  { id: 'dl-5', student_id: 's2', device_id: 'tab-02', usage_start: new Date(Date.now() - 10000000).toISOString(), usage_end: new Date().toISOString(), activity_description: 'Collaborative project work on Google Docs.', flagged: false },
+  { id: 'dl-6', student_id: 's3', device_id: 'tab-05', usage_start: new Date(Date.now() - 15000000).toISOString(), usage_end: new Date().toISOString(), activity_description: 'Accessing unauthorized gaming portal (Poki).', flagged: true },
+  { id: 'dl-7', student_id: 's1', device_id: 'tab-01', usage_start: new Date(Date.now() - 20000000).toISOString(), usage_end: new Date().toISOString(), activity_description: 'Khan Academy mathematics module completed.', flagged: false },
+  { id: 'dl-8', student_id: 's2', device_id: 'tab-02', usage_start: new Date(Date.now() - 25000000).toISOString(), usage_end: new Date().toISOString(), activity_description: 'Search history indicates interest in "how to hide browser history".', flagged: true },
 ];
 
 export const MOCK_NOTIFICATIONS: Notification[] = [
   { id: 'n1', title: 'New Incident Report', message: 'A new bullying report has been filed for Grade 10.', timestamp: new Date().toISOString(), isRead: false, type: 'incident' },
-  { id: 'n2', title: 'Report Ready', message: 'The Monthly Welfare Summary is ready for download.', timestamp: new Date(Date.now() - 3600000).toISOString(), isRead: true, type: 'report' },
 ];
 
 export const PREDEFINED_ACCOUNTS = [
-  {
-    email: 'admin@gmail.com',
-    password: '12345678',
-    user: MOCK_USERS[0]
-  },
-  {
-    email: 'teacher@gmail.com',
-    password: '12345678',
-    user: MOCK_USERS[1]
-  },
-  {
-    email: 'counselor@gmail.com',
-    password: '12345678',
-    user: MOCK_USERS[2]
-  },
-  {
-    email: 'parent@gmail.com',
-    password: '12345678',
-    user: MOCK_USERS[3]
-  }
+  { email: 'admin@gmail.com', password: '12345678', user: MOCK_USERS[0] },
+  { email: 'teacher@gmail.com', password: '12345678', user: MOCK_USERS[1] },
+  { email: 'counselor@gmail.com', password: '12345678', user: MOCK_USERS[2] },
+  { email: 'parent@gmail.com', password: '12345678', user: MOCK_USERS[3] }
 ];
