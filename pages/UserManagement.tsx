@@ -80,7 +80,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ localUsers, onUpdateUse
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-white font-black text-xs shadow-sm ${
-                        user.role === 'Administrator' ? 'bg-slate-900' : 'bg-teal-700'
+                        user.role === 'Parent' ? 'bg-slate-900' : 'bg-teal-700'
                       }`}>
                         {user.full_name[0]}
                       </div>
@@ -98,7 +98,7 @@ const UserManagement: React.FC<UserManagementProps> = ({ localUsers, onUpdateUse
                     >
                       <option value="Teacher">Teacher</option>
                       <option value="Counselor">Counselor</option>
-                      <option value="Administrator">Administrator</option>
+                      <option value="Parent">Parent</option>
                     </select>
                   </td>
                   <td className="px-8 py-5">

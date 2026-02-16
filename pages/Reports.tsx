@@ -11,7 +11,7 @@ interface ReportsProps {
 
 const Reports: React.FC<ReportsProps> = ({ currentUser, reports, onGenerateReport }) => {
   const [isGenerating, setIsGenerating] = useState(false);
-  const isAdmin = currentUser.role === 'Administrator' || currentUser.role === 'Counselor';
+  const isAdmin = currentUser.role === 'Parent' || currentUser.role === 'Counselor';
 
   const handleGenerate = () => {
     setIsGenerating(true);

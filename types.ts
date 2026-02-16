@@ -1,5 +1,5 @@
 
-export type UserRole = 'Teacher' | 'Counselor' | 'Administrator';
+export type UserRole = 'Teacher' | 'Counselor' | 'Parent';
 
 export interface User {
   id: string;
@@ -42,6 +42,9 @@ export interface Incident {
   description: string;
   immediate_action: string;
   status: 'Pending' | 'Investigating' | 'Resolved' | 'Closed';
+  is_parent_reported?: boolean;
+  is_anonymous?: boolean;
+  follow_up_notes?: string;
 }
 
 export interface BehavioralIntervention {
@@ -67,7 +70,7 @@ export interface DeviceUsageRecord {
 
 export interface ParentGuardian {
   id: string;
-  // Fix: Added student_id to allow linking parents to students in the application logic
+  user_id: string; // Linked to profiles.id
   student_id: string;
   first_name: string;
   last_name: string;
