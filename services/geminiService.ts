@@ -11,7 +11,6 @@ export const getBehavioralInsight = async (studentHistory: any[]) => {
     return fallbackResponse("API Access restricted.");
   }
 
-  // Use a fresh instance with the environment-provided API key
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   const prompt = `
@@ -21,15 +20,14 @@ export const getBehavioralInsight = async (studentHistory: any[]) => {
     Student Incident Data:
     ${JSON.stringify(studentHistory)}
     
-    Format your response as a JSON object adhering to the schema.
+    Format your response as a JSON object.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-3-pro-preview",
+      model: "gemini-3-flash-preview", // Flash for faster insights
       contents: prompt,
       config: {
-        thinkingConfig: { thinkingBudget: 4096 },
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -47,8 +45,7 @@ export const getBehavioralInsight = async (studentHistory: any[]) => {
       }
     });
 
-    // Access .text property directly as per guidelines
-    const resultText = response.text?.trim() || "{}";
+    const resultText = response.text || "{}";
     return JSON.parse(resultText);
   } catch (error) {
     console.error("Gemini Analysis Error:", error);

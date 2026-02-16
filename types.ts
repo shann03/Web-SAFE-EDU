@@ -1,5 +1,5 @@
 
-export type UserRole = 'Teacher' | 'Counselor' | 'Parent';
+export type UserRole = 'Teacher' | 'Counselor' | 'Parent' | 'Administrator';
 
 export interface User {
   id: string;
@@ -8,6 +8,7 @@ export interface User {
   full_name: string;
   is_active: boolean;
   role: UserRole;
+  linked_lrn?: string; // Used by parents to link to a student
   last_login?: string;
 }
 
@@ -23,6 +24,7 @@ export interface Student {
   section: string;
   address: string;
   contact_number: string;
+  background?: string; // Narrative context for behavioral assistance
 }
 
 export interface IncidentType {
@@ -47,6 +49,23 @@ export interface Incident {
   follow_up_notes?: string;
 }
 
+export interface InterventionMilestone {
+  id: string;
+  date: string;
+  title: string;
+  notes: string;
+  outcome?: string;
+  recorded_by: string;
+}
+
+export interface Attachment {
+  id: string;
+  name: string;
+  type: string;
+  date_attached: string;
+  size: string;
+}
+
 export interface BehavioralIntervention {
   id: string;
   student_id: string;
@@ -56,6 +75,9 @@ export interface BehavioralIntervention {
   start_date: string;
   end_date?: string;
   status: string;
+  history?: InterventionMilestone[];
+  related_incident_ids?: string[];
+  attachments?: Attachment[];
 }
 
 export interface DeviceUsageRecord {
@@ -70,7 +92,7 @@ export interface DeviceUsageRecord {
 
 export interface ParentGuardian {
   id: string;
-  user_id: string; // Linked to profiles.id
+  user_id: string;
   student_id: string;
   first_name: string;
   last_name: string;

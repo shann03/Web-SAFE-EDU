@@ -20,7 +20,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [studentLrn, setStudentLrn] = useState('');
-  const [role, setRole] = useState<'Teacher' | 'Counselor' | 'Parent'>('Teacher');
+  const [role, setRole] = useState<'Teacher' | 'Counselor' | 'Parent' | 'Administrator'>('Teacher');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -43,11 +43,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         if (authData.user) {
           const { data: profile } = await supabase.from('profiles').select('*').eq('id', authData.user.id).single();
-          if (profile) onLogin(profile as User);
-          else onLogin({ id: authData.user.id, full_name: 'Verified User', role: 'Teacher', email: authData.user.email!, username: 'user', is_active: true } as User);
+          if (profile) {
+            onLogin(profile as User);
+          } else {
+            onLogin({ 
+              id: authData.user.id, 
+              full_name: authData.user.user_metadata.full_name || 'Registry User', 
+              role: authData.user.user_metadata.role || 'Teacher', 
+              email: authData.user.email!, 
+              username: authData.user.email!.split('@')[0], 
+              is_active: true,
+              linked_lrn: authData.user.user_metadata.linked_lrn
+            } as User);
+          }
         }
       } else {
-        // Parent validation: Ensure LRN exists if signing up as parent
         if (role === 'Parent' && studentLrn.length < 5) {
           throw new Error("A valid Student LRN is required for Parent registration.");
         }
@@ -60,14 +70,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               full_name: fullName, 
               role: role,
               linked_lrn: role === 'Parent' ? studentLrn : null
-            },
-            emailRedirectTo: window.location.origin
+            }
           }
         });
 
         if (signUpError) throw signUpError;
         
         if (signUpData.user) {
+          await supabase.from('profiles').insert([{
+            id: signUpData.user.id,
+            full_name: fullName,
+            role: role,
+            email: email,
+            username: email.split('@')[0],
+            is_active: true,
+            linked_lrn: role === 'Parent' ? studentLrn : null
+          }]);
+
           alert("Verification email sent! Please confirm your email to activate your registry access.");
           setIsLoginMode(true);
         }
@@ -98,7 +117,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <ShieldCheck size={32} />
             </div>
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">SAFE-EDU</h1>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mt-2">Family & Scholar Access Portal</p>
+            <div className="mt-2 space-y-1">
+              <p className="text-teal-600 text-[9px] font-black uppercase tracking-widest">Student Assistance & Fostering Excellence in EDUcation</p>
+              <p className="text-slate-400 text-[8px] font-black uppercase tracking-[0.2em] opacity-80">Authority & Scholar Registry</p>
+            </div>
           </div>
 
           <div className="px-10 flex border-b border-slate-100">
@@ -133,7 +155,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <div className="relative animate-in slide-in-from-top-2">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-teal-500" size={16} />
                       <input required type="text" value={studentLrn} onChange={(e) => setStudentLrn(e.target.value)} className="w-full pl-10 pr-4 py-3.5 bg-teal-50 border border-teal-200 rounded-xl text-sm outline-none focus:ring-1 focus:ring-teal-600 font-bold placeholder:text-teal-300" placeholder="Student LRN (Child's ID)" />
-                      <p className="text-[8px] text-teal-600 font-bold uppercase tracking-widest mt-1 ml-1">Required to link your child's records</p>
                     </div>
                   )}
                 </>
@@ -152,10 +173,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
 
             <button type="submit" disabled={isLoading} className="w-full py-4 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase shadow-2xl active:scale-95 disabled:opacity-70 transition-all hover:bg-slate-800 tracking-[0.2em]">
-              {isLoading ? <Loader2 size={18} className="animate-spin mx-auto" /> : isLoginMode ? 'Enter Registry' : 'Confirm Identity'}
+              {isLoading ? <Loader2 size={18} className="animate-spin mx-auto" /> : isLoginMode ? 'Authorize Session' : 'Create Authority Profile'}
             </button>
             {isLoginMode && (
-              <button type="button" className="w-full text-[9px] font-black uppercase text-slate-400 tracking-widest hover:text-slate-600 transition-colors">Forgot Password?</button>
+              <button type="button" className="w-full text-[9px] font-black uppercase text-slate-400 tracking-widest hover:text-slate-600 transition-colors">Emergency Credential Recovery</button>
             )}
           </form>
         </div>

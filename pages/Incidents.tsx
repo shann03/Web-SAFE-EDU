@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState, useRef } from 'react';
-import { AlertTriangle, Plus, Eye, X, ShieldCheck, Mic, MicOff, Loader2, BrainCircuit, Shield } from 'lucide-react';
+import { AlertTriangle, Plus, Eye, X, ShieldCheck, Mic, MicOff, Loader2, BrainCircuit, Shield, MessageSquare, History, BookOpen } from 'lucide-react';
 import { User, Incident, Student, IncidentType } from '../types';
 import { GoogleGenAI } from "@google/genai";
 
@@ -16,8 +16,11 @@ interface IncidentsProps {
 
 const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students, incidentTypes, onAddIncident, onUpdateStatus, searchQuery }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [isDictating, setIsDictating] = useState(false);
   const [isProcessingAI, setIsProcessingAI] = useState(false);
+  
   const [newIncident, setNewIncident] = useState({ 
     student_id: currentUser.role === 'Parent' ? students[0]?.id : '', 
     incident_type_id: '', 
@@ -95,6 +98,16 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
     });
   };
 
+  const handleOpenDetail = (inc: Incident) => {
+    setSelectedIncident(inc);
+    setIsDetailOpen(true);
+  };
+
+  const studentForSelected = useMemo(() => {
+    if (!selectedIncident) return null;
+    return students.find(s => s.id === selectedIncident.student_id);
+  }, [selectedIncident, students]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row justify-between md:items-end gap-6 border-b border-slate-200 pb-8">
@@ -140,12 +153,18 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
                     <td className="px-8 py-5 text-xs font-bold text-slate-500">{new Date(inc.date_occurred).toLocaleDateString()}</td>
                     <td className="px-8 py-5">
                       <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-[10px] font-black uppercase tracking-widest border ${
-                        inc.status === 'Resolved' ? 'bg-teal-50 text-teal-700 border-teal-100' : 'bg-amber-50 text-amber-700 border-amber-100'
+                        inc.status === 'Resolved' ? 'bg-teal-50 text-teal-700 border-teal-100' : 
+                        inc.status === 'Investigating' ? 'bg-amber-50 text-amber-700 border-amber-100 animate-pulse' :
+                        'bg-slate-50 text-slate-500 border-slate-100'
                       }`}>
                         {inc.status}
                       </div>
                     </td>
-                    <td className="px-8 py-5 text-right"><Eye size={16} className="ml-auto text-slate-300 hover:text-slate-900 cursor-pointer" /></td>
+                    <td className="px-8 py-5 text-right">
+                      <button onClick={() => handleOpenDetail(inc)} className="ml-auto p-2 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all">
+                        <Eye size={16} />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -154,6 +173,80 @@ const Incidents: React.FC<IncidentsProps> = ({ currentUser, incidents, students,
         </div>
       </div>
 
+      {/* Detail Modal */}
+      {isDetailOpen && selectedIncident && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-900 text-white">
+              <div className="flex items-center gap-3">
+                <History size={18} className="text-teal-400" />
+                <h3 className="text-xs font-black uppercase tracking-widest">Incident Investigation Record</h3>
+              </div>
+              <button onClick={() => setIsDetailOpen(false)}><X size={20} /></button>
+            </div>
+            <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Registry Details</label>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase">Incident Nature</p>
+                      <p className="text-sm font-bold text-slate-900">{incidentTypes.find(t => t.id === selectedIncident.incident_type_id)?.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase">Location & Date</p>
+                      <p className="text-sm font-bold text-slate-900">{selectedIncident.location} • {new Date(selectedIncident.date_occurred).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2">Subject Status</label>
+                  <div className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-1 ${
+                    selectedIncident.status === 'Resolved' ? 'bg-teal-50 border-teal-100 text-teal-700' : 'bg-amber-50 border-amber-100 text-amber-700'
+                  }`}>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{selectedIncident.status}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Added Student Background context here for all users */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <BookOpen size={12} className="text-teal-600" /> Subject Background Context
+                 </h4>
+                 <p className="text-xs font-medium text-slate-700 italic leading-relaxed">
+                    {studentForSelected?.background || "No historical context committed to registry for this subject."}
+                 </p>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Event Narrative</label>
+                <div className="p-4 bg-slate-100/50 rounded-xl border border-slate-200 text-sm text-slate-700 leading-relaxed font-medium">
+                  {selectedIncident.description}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Actions Taken / Follow-up</label>
+                <div className="p-4 bg-teal-50/50 rounded-xl border border-teal-100 text-sm text-teal-800 leading-relaxed font-bold">
+                  {selectedIncident.follow_up_notes || selectedIncident.immediate_action || 'Registry awaiting administrative update...'}
+                </div>
+              </div>
+
+              {currentUser.role === 'Parent' && (
+                <div className="flex gap-4">
+                  <button onClick={() => alert("Meeting request sent to school counselor.")} className="flex-1 flex items-center justify-center gap-2 py-4 bg-slate-900 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95">
+                    <MessageSquare size={16} /> Request Staff Meeting
+                  </button>
+                  <button className="flex-1 py-4 bg-white border border-slate-200 text-slate-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Provide Feedback</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Incident Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">

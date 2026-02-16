@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { 
   Search, Plus, MapPin, BrainCircuit, Users, ShieldAlert, 
   Lock, X, Phone, Mail, Tablet, Camera, CheckCircle, 
-  RefreshCw, AlertCircle, Fingerprint
+  RefreshCw, AlertCircle, Fingerprint, BookOpen
 } from 'lucide-react';
 import { getBehavioralInsight } from '../services/geminiService';
 import { User, Student, Incident, ParentGuardian, DeviceUsageRecord } from '../types';
@@ -30,7 +30,7 @@ const Students: React.FC<StudentsProps> = ({ currentUser, students, incidents, p
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [newStudent, setNewStudent] = useState<Partial<Student>>({
-    lrn: '', first_name: '', last_name: '', grade_level: '7', section: '', address: '', gender: 'Male'
+    lrn: '', first_name: '', last_name: '', grade_level: '7', section: '', address: '', gender: 'Male', background: ''
   });
 
   const filteredStudents = useMemo(() => {
@@ -82,7 +82,7 @@ const Students: React.FC<StudentsProps> = ({ currentUser, students, incidents, p
     e.preventDefault();
     await onAddStudent({ ...newStudent, date_of_birth: new Date().toISOString() });
     setIsModalOpen(false);
-    setNewStudent({ lrn: '', first_name: '', last_name: '', grade_level: '7', section: '', address: '', gender: 'Male' });
+    setNewStudent({ lrn: '', first_name: '', last_name: '', grade_level: '7', section: '', address: '', gender: 'Male', background: '' });
   };
 
   return (
@@ -157,6 +157,19 @@ const Students: React.FC<StudentsProps> = ({ currentUser, students, incidents, p
                     <BrainCircuit size={16} className={isAnalyzing ? 'animate-pulse' : ''} /> {isAnalyzing ? 'Processing History...' : 'AI Welfare Check'}
                   </button>
                 )}
+              </div>
+
+              {/* Student Background Section */}
+              <div className="mb-8 p-6 bg-slate-50 border border-slate-200 rounded-xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-3 text-slate-200">
+                  <BookOpen size={24} />
+                </div>
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <BookOpen size={12} className="text-teal-600" /> Official Subject Background
+                </h4>
+                <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
+                  {selectedStudent.background || "No background narrative has been committed to this profile yet. Assistance officers should perform an initial interview."}
+                </p>
               </div>
 
               {aiAnalysis && (
@@ -353,6 +366,10 @@ const Students: React.FC<StudentsProps> = ({ currentUser, students, incidents, p
               <div className="space-y-1">
                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Home Address</label>
                 <input required type="text" value={newStudent.address} onChange={(e) => setNewStudent({...newStudent, address: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-teal-500 outline-none" />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">Subject Background / Context</label>
+                <textarea value={newStudent.background} onChange={(e) => setNewStudent({...newStudent, background: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm min-h-[80px] outline-none" placeholder="Enter behavioral or academic history..." />
               </div>
               <button type="submit" className="w-full bg-slate-900 text-white py-3.5 rounded-lg text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl active:scale-95">
                 Commit to Registry
