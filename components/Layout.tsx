@@ -81,17 +81,19 @@ const Layout: React.FC<LayoutProps> = ({
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden relative">
       <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl z-20">
-        <div className="p-6">
+        <div className="p-6 shrink-0">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 bg-teal-600 rounded flex items-center justify-center text-white">
               <ShieldCheck size={18} />
             </div>
             <h1 className="text-xl font-bold text-white tracking-wider">SAFE-EDU</h1>
           </div>
-          <p className="text-[8px] font-black text-teal-500/60 uppercase tracking-[0.2em] mb-10 leading-relaxed px-1">
+          <p className="text-[8px] font-black text-teal-500/60 uppercase tracking-[0.2em] mb-4 leading-relaxed px-1">
             Student Assistance & Fostering Excellence in EDUcation
           </p>
-          
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-2 custom-scrollbar">
           <nav className="space-y-1">
             {filteredNavItems.map((item) => (
               <button
@@ -110,7 +112,7 @@ const Layout: React.FC<LayoutProps> = ({
           </nav>
         </div>
 
-        <div className="mt-auto p-6 border-t border-slate-800 bg-slate-900/50">
+        <div className="p-6 border-t border-slate-800 bg-slate-900/50 shrink-0">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-10 h-10 shrink-0 rounded-lg bg-slate-800 flex items-center justify-center text-sm font-bold text-teal-500 border border-slate-700">
               {user.full_name.split(' ').map(n => n[0]).join('')}

@@ -159,17 +159,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <AlertTriangle size={16} className="shrink-0 text-red-600" /> 
                     <span className="flex-1">{error}</span>
                   </div>
-                  {isThrottled && (
-                    <button 
-                      type="button" 
-                      onClick={handleSystemOverride}
-                      className="w-full py-3 bg-slate-900 text-white rounded-xl flex items-center justify-center gap-2 hover:bg-slate-800 transition-all shadow-lg active:scale-95 group"
-                    >
-                      <Zap size={14} className="text-teal-400 fill-teal-400 group-hover:scale-110 transition-transform" />
-                      <span className="text-[10px] font-black uppercase tracking-widest">System Maintenance Bypass</span>
-                      <ArrowRight size={14} />
-                    </button>
-                  )}
                 </div>
               )}
               
@@ -218,40 +207,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 {isLoading ? <Loader2 size={18} className="animate-spin mx-auto" /> : isLoginMode ? 'Authorize Session' : 'Create Authority Profile'}
               </button>
             </form>
-
-            {isLoginMode && (
-              <div className="pt-6 border-t border-slate-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="h-px flex-1 bg-slate-100"></div>
-                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Demo Quick Access</span>
-                  <div className="h-px flex-1 bg-slate-100"></div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {PREDEFINED_ACCOUNTS.map((acc, idx) => {
-                    const icons = [
-                      <Shield size={14} className="text-amber-500" />,
-                      <GraduationCap size={14} className="text-teal-500" />,
-                      <Users size={14} className="text-blue-500" />,
-                      <Heart size={14} className="text-rose-500" />
-                    ];
-                    return (
-                      <button 
-                        key={idx}
-                        onClick={() => handleDemoLogin(acc.user as User)}
-                        className="flex items-center gap-2.5 p-3 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition-all group text-left"
-                      >
-                        <div className="p-2 bg-white rounded-lg shadow-sm group-hover:scale-110 transition-transform">
-                          {icons[idx]}
-                        </div>
-                        <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight truncate">
-                          {acc.user.role}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

@@ -6,26 +6,28 @@ import { GoogleGenAI, Type } from "@google/genai";
  * Adheres to strict @google/genai SDK guidelines.
  */
 export const getBehavioralInsight = async (studentHistory: any[]) => {
-  if (!process.env.API_KEY) {
-    console.error("API_KEY environment variable is missing.");
-    return fallbackResponse("API Access restricted.");
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  
+  if (!apiKey) {
+    console.warn("GEMINI_API_KEY is missing. Returning mock insight.");
+    return fallbackResponse("AI Insight is currently unavailable (Missing API Key).");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
-  const prompt = `
-    You are an expert educational psychologist. 
-    Analyze the following student incident history and provide a professional assessment.
-    
-    Student Incident Data:
-    ${JSON.stringify(studentHistory)}
-    
-    Format your response as a JSON object.
-  `;
-
   try {
+    const ai = new GoogleGenAI({ apiKey });
+    
+    const prompt = `
+      You are an expert educational psychologist. 
+      Analyze the following student incident history and provide a professional assessment.
+      
+      Student Incident Data:
+      ${JSON.stringify(studentHistory)}
+      
+      Format your response as a JSON object.
+    `;
+
     const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview", // Flash for faster insights
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",

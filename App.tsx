@@ -284,11 +284,15 @@ const App: React.FC = () => {
 
   if (isInitializing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center space-y-4">
-          <Loader2 className="animate-spin text-slate-900 mx-auto" size={32} />
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Bootstrapping Registry Environment...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-slate-200 border-t-safe-teal rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 bg-white rounded-full"></div>
+          </div>
         </div>
+        <h2 className="mt-6 text-xl font-semibold text-slate-800 tracking-tight">SAFE-EDU</h2>
+        <p className="mt-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 animate-pulse">Bootstrapping Registry Environment...</p>
       </div>
     );
   }
